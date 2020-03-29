@@ -1,0 +1,182 @@
+﻿@using MemoryEtcWasm.Shared.Models;
+@using MemoryEtcWasm.Shared.ExtensionMethods
+
+
+@if (!begin)
+{
+    <div class="text-center" style="margin-top:2em">
+        <h2>Memory Game</h2>
+        <br />
+        <p>How Many Players?</p>
+        <input type="number" @bind="playerCount" max="4" @onkeyup="KeyBoardCreate" />
+        <button class="btn btn-primary" @onclick=@(() => CreatePlayers(playerCount))>Begin Game</button>
+    </div>
+}
+else
+{
+    <h1 style="padding-left:14.5em">Memory Game</h1>
+    <button class="btn btn-secondary" style="margin-left:3em" @onclick="Restart">New Game</button>
+    <div class="row">
+        <div class="col" style="width:15em; flex:none; max-width:15em; background-color:lightblue">
+            @if (isOver)
+            {
+                <h1 class="blinking">@Winner.Name Wins!</h1>
+            }
+            <p style="line-height:1.5; font-size:large">
+                @foreach (var player in Players)
+                {
+                    string cssClassName = player.Name.ToLower().Replace(" ", "");
+                    <span class="@cssClassName">
+                        <b>@player.Name</b> Score: @player.Score;
+                    </span>
+                    <br />
+                }
+            </p>
+
+            <h3 style="padding-left:2.5em">
+                @CurrentPlayer.Name's Turn!
+            </h3>
+        </div>
+        
+        <div class="col" style="width:41em; margin-left:1em">
+            <h4>@result</h4>
+            <div class="card-columns-four" style="width:40em; background-color:darkblue; padding:.5em">
+
+                @foreach (var card in Cards)
+                {                    
+                    <div class="card" style="width:9.2em; flex:none; border-radius:10px; border:3px solid #000000; padding:1px; height:9.2em; justify-content:center; margin:5px;" @onclick="@(() => SelectCard(card))">
+                        @if (card.IsFlipped)
+                        {
+                            <img src="@card.Face" style="width:9em; height:9em">
+                        }
+                        else
+                        {
+                            <p class="text-center" style="font-size:x-large; color:darkblue"> Select Card</p>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+@code {
+    MemoryBoard Board = new MemoryBoard();
+    List<MemoryCard> Cards { get; set; }
+    MemoryCard PreviousCard { get; set; }
+
+    Player Winner { get; set; }
+    List<Player> Players { get; set; }
+    Player CurrentPlayer { get; set; }
+    string result = "";
+    bool isOver = false;
+    bool begin = false;
+    bool lockCards = false;
+    int selections = 0;
+    int playerCount = 1;
+    int currentTurn = 1;
+
+
+    async Task StartGame()
+    {
+        await Task.Run(() =>
+        {
+            currentTurn = 1;
+            Cards = Board.Board.ToList();
+            foreach (var card in Cards)
+            {
+                card.IsFlipped = false;
+            }
+            Cards.Shuffle();
+            CurrentPlayer = Players.Where(x => x.Order == currentTurn).FirstOrDefault();
+        });
+        begin = true;
+        Console.WriteLine("game began");
+
+    }
+    void Restart()
+    {
+        result = "";
+        isOver = false;
+        begin = false;
+        selections = 0;
+        playerCount = 1;
+        currentTurn = 1;
+        Board = new MemoryBoard();
+        StateHasChanged();
+
+    }
+    public async Task SelectCard(MemoryCard card)
+    {
+        if (card.IsFlipped)
+            return;
+
+        if (lockCards)
+            return;
+
+        card.IsFlipped = true;
+        selections += 1;
+        if (selections == 2 && card.Face == PreviousCard.Face)
+        {
+            var playerScore = Players.Where(x => x.Order == currentTurn).FirstOrDefault();
+            playerScore.Score += 1;
+            result = "Match!";
+            selections = 0;
+            DetermineWinner();
+            SwitchPlayers();
+            return;
+        }
+        if (selections == 2 && card.Face != PreviousCard.Face)
+        {
+            lockCards = true;
+            result = "No Match, Try again!";
+            selections = 0;
+            await Task.Delay(3000);
+            card.IsFlipped = false;
+            PreviousCard.IsFlipped = false;
+            SwitchPlayers();
+            lockCards = false;
+            return;
+        }
+        PreviousCard = card;
+    }
+    void SwitchPlayers()
+    {
+        if (currentTurn == playerCount)
+            currentTurn = 1;
+        else
+            currentTurn += 1;
+        CurrentPlayer = Players.Where(x => x.Order == currentTurn).FirstOrDefault();
+    }
+    async Task CreatePlayers(int playerCount)
+    {
+        Players = new List<Player>();
+        await Task.Run(() =>
+        {
+            for (int i = 1; i <= playerCount; i++)
+            {
+                var player = new Player() { Name = $"Player {i}", Order = i, Score = 0 };
+                Players.Add(player);
+                Console.WriteLine($"Added {player.Name}");
+            }
+        });
+        await StartGame();
+        begin = true;
+    }
+    async void KeyBoardCreate(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter")
+        {
+            await CreatePlayers(playerCount);
+        }
+    }
+    void DetermineWinner()
+    {
+        var flipCount = Cards.Where(x => x.IsFlipped).Count();
+        if (flipCount != 16)
+        {
+            return;
+        }
+        Winner = Players.OrderByDescending(x => x.Score).First();
+        isOver = true;
+    }
+}
