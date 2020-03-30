@@ -7,14 +7,22 @@
     <div class="text-center" style="margin-top:2em">
         <h2 class="">Memory Game</h2>
         <br />
-        <p>select difficulty</p>
-        <select class="form-control text-center" @bind="Difficulty" style="width:12.5em">
-            <option value="easy">Easy</option>
-            <option value="medium">Medium</option>
-            <option value="hard">Hard</option>
-        </select>
-        <p>How Many Players?</p>
-        <input type="number" @bind="playerCount" max="4" @onkeyup="KeyBoardCreate" /><br />
+        <p>Select <strong>difficulty</strong> and <strong>number of players</strong></p>
+        <MatSelect Label="select difficulty" @bind-Value="Difficulty">            
+            <MatOptionString Value="easy">Easy</MatOptionString>
+            <MatOptionString Value="medium">Medium</MatOptionString>
+            <MatOptionString Value="hard">Hard</MatOptionString>
+        </MatSelect>
+        @*<select @bind="Difficulty" style="width:12.5em; margin-left:14.5em">
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+            </select>*@
+        <p>
+            <MatNumericUpDownField Label="How Many Players?" @bind-Value="playerCount" DecimalPlaces=0
+                                   Minimum=1 Maximum=4 @onkeyup="KeyBoardCreate">
+            </MatNumericUpDownField>
+        </p>        
         <button class="btn btn-primary" @onclick=@(() => CreatePlayers(playerCount))>Begin Game</button>
     </div>
 }
@@ -43,13 +51,13 @@ else
                 @CurrentPlayer.Name's Turn!
             </h3>
         </div>
-        
+
         <div class="col" style="width:61em; margin-left:1em">
             <h4>@result</h4>
-            <div class="@Difficulty" style="background-color:darkblue; padding:.5em">
+            <div class="@Difficulty mat-elevation-z24" style="background-color:darkblue; padding:.5em">
 
                 @foreach (var card in Cards)
-                {                    
+                {
                     <div class="card" style="width:9.2em; flex:none; border-radius:10px; border:3px solid #000000; padding:1px; height:9.2em; justify-content:center; margin:5px;" @onclick="@(() => SelectCard(card))">
                         @if (card.IsFlipped)
                         {
@@ -57,7 +65,7 @@ else
                         }
                         else
                         {
-                            <p class="text-center" style="font-size:x-large; color:darkblue"> Select Card</p>
+                            <p class="text-center" style="font-size:x-large; color:darkblue; padding-top:2em"> Select Card</p>
                         }
                     </div>
                 }
@@ -86,6 +94,8 @@ else
     {
         await Task.Run(() =>
         {
+            if (string.IsNullOrEmpty(Difficulty))
+                Difficulty = "easy";
             Board = new MemoryBoard(Difficulty);
             Console.WriteLine("Difficulty set to: " + Difficulty);
             currentTurn = 1;
