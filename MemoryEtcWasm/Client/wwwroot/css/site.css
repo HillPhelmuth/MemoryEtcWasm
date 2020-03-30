@@ -195,11 +195,56 @@ app {
     column-count: 4;
     -webkit-column-gap: .25rem;
     -moz-column-gap: .25rem;
-    column-gap: .15em;
+    column-gap: .25em;
     orphans: 1;
     widows: 1
 }
 
+.easy {
+    -webkit-column-count: 4;
+    -moz-column-count: 4;
+    column-count: 4;
+    -webkit-column-gap: .25rem;
+    -moz-column-gap: .25rem;
+    column-gap: .25em;
+    orphans: 1;
+    widows: 1;
+    width: 40em;
+}
+    .easy .card {
+        display: inline-block;
+        width: 100%
+    }
+.medium {
+    -webkit-column-count: 5;
+    -moz-column-count: 5;
+    column-count: 5;
+    -webkit-column-gap: .25rem;
+    -moz-column-gap: .25rem;
+    column-gap: .25em;
+    orphans: 1;
+    widows: 1;
+    width: 50em
+}
+    .medium .card {
+        display: inline-block;
+        width: 100%
+    }
+.hard {
+    -webkit-column-count: 6;
+    -moz-column-count: 6;
+    column-count: 6;
+    -webkit-column-gap: .25rem;
+    -moz-column-gap: .25rem;
+    column-gap: .25em;
+    orphans: 1;
+    widows: 1;
+    width: 60em
+}
+    .hard .card {
+        display: inline-block;
+        width: 100%
+    }
 .player1 {
     color: blue;
 }
@@ -243,57 +288,56 @@ app {
 }
 
 .zoom {
-    animation: zoomText 10.6s;
+    animation: zoomText 2s;
 }
 
 @keyframes zoomText {
     0% {
-        height: .1em;
-        width: .1em;
+        font-size: .1em;        
     }
 
     10% {
-        height: 1em;
-        width: 1em;
+        font-size: .2em;
+        
     }
 
     25% {
-        height: 2em;
-        width: 2em;
+        font-size: .3em;
+        
     }
 
     40% {
-        height: 3em;
-        width: 3em;
+        font-size: .4em;
+        
     }
 
     50% {
-        height: 4em;
-        width: 4em;
+        font-size: .6em;
+        
     }
 
     65% {
-        height: 5em;
-        width: 5em;
+        font-size: .9em;
+        
     }
 
     75% {
-        height: 6em;
-        width: 6em;
+        font-size: 1.2em;
+        
     }
 
     85% {
-        height: 7em;
-        width: 7em;
+        font-size: 1.5em;
+        
     }
 
     93% {
-        height: 8em;
-        width: 8em;
+        font-size: 1.8em;
+        
     }
 
     100% {
-        height: 9.2em;
-        width: 9.2em;
+        font-size: 2em;
+       
     }
 }

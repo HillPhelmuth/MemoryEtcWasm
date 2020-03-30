@@ -5,10 +5,16 @@
 @if (!begin)
 {
     <div class="text-center" style="margin-top:2em">
-        <h2>Memory Game</h2>
+        <h2 class="">Memory Game</h2>
         <br />
+        <p>select difficulty</p>
+        <select class="form-control text-center" @bind="Difficulty" style="width:12.5em">
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+        </select>
         <p>How Many Players?</p>
-        <input type="number" @bind="playerCount" max="4" @onkeyup="KeyBoardCreate" />
+        <input type="number" @bind="playerCount" max="4" @onkeyup="KeyBoardCreate" /><br />
         <button class="btn btn-primary" @onclick=@(() => CreatePlayers(playerCount))>Begin Game</button>
     </div>
 }
@@ -38,9 +44,9 @@ else
             </h3>
         </div>
         
-        <div class="col" style="width:41em; margin-left:1em">
+        <div class="col" style="width:61em; margin-left:1em">
             <h4>@result</h4>
-            <div class="card-columns-four" style="width:40em; background-color:darkblue; padding:.5em">
+            <div class="@Difficulty" style="background-color:darkblue; padding:.5em">
 
                 @foreach (var card in Cards)
                 {                    
@@ -60,10 +66,10 @@ else
     </div>
 }
 @code {
-    MemoryBoard Board = new MemoryBoard();
+    MemoryBoard Board { get; set; }
     List<MemoryCard> Cards { get; set; }
     MemoryCard PreviousCard { get; set; }
-
+    string Difficulty { get; set; }
     Player Winner { get; set; }
     List<Player> Players { get; set; }
     Player CurrentPlayer { get; set; }
@@ -80,8 +86,11 @@ else
     {
         await Task.Run(() =>
         {
+            Board = new MemoryBoard(Difficulty);
+            Console.WriteLine("Difficulty set to: " + Difficulty);
             currentTurn = 1;
             Cards = Board.Board.ToList();
+            Console.WriteLine($"no. of Cards (page): {Cards.Count()}");
             foreach (var card in Cards)
             {
                 card.IsFlipped = false;
@@ -101,7 +110,7 @@ else
         selections = 0;
         playerCount = 1;
         currentTurn = 1;
-        Board = new MemoryBoard();
+        Board = null;
         StateHasChanged();
 
     }
@@ -172,7 +181,7 @@ else
     void DetermineWinner()
     {
         var flipCount = Cards.Where(x => x.IsFlipped).Count();
-        if (flipCount != 16)
+        if (flipCount != Cards.Count())
         {
             return;
         }
