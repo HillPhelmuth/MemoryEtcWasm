@@ -245,6 +245,16 @@ app {
         display: inline-block;
         width: 100%
     }
+.memcard {
+    width: 9.2em;
+    flex: none;
+    border-radius: 10px;
+    border: 3px solid #000000;
+    padding: 1px;
+    height: 9.2em;
+    justify-content: center;
+    margin: 5px;
+}
 .player1 {
     color: blue;
 }
@@ -263,6 +273,9 @@ app {
 
 .blinking {
     animation: blinkingText 1.2s infinite;
+}
+.nameList .name {
+    display:inline-block
 }
 
 @keyframes blinkingText {

@@ -8,22 +8,31 @@
         <h2 class="">Memory Game</h2>
         <br />
         <p>Select <strong>difficulty</strong> and <strong>number of players</strong></p>
-        <MatSelect Label="select difficulty" @bind-Value="Difficulty">            
+        <MatSelect Label="select difficulty" @bind-Value="Difficulty">
             <MatOptionString Value="easy">Easy</MatOptionString>
             <MatOptionString Value="medium">Medium</MatOptionString>
             <MatOptionString Value="hard">Hard</MatOptionString>
         </MatSelect>
-        @*<select @bind="Difficulty" style="width:12.5em; margin-left:14.5em">
-                <option value="easy">Easy</option>
-                <option value="medium">Medium</option>
-                <option value="hard">Hard</option>
-            </select>*@
         <p>
-            <MatNumericUpDownField Label="How Many Players?" @bind-Value="playerCount" DecimalPlaces=0
-                                   Minimum=1 Maximum=4 @onkeyup="KeyBoardCreate">
+            <MatNumericUpDownField Label="How Many Players?" @bind-Value="playerCount" DecimalPlaces=0 Minimum=1 Maximum=4 @onkeyup="KeyBoardCreate">
             </MatNumericUpDownField>
-        </p>        
-        <button class="btn btn-primary" @onclick=@(() => CreatePlayers(playerCount))>Begin Game</button>
+        </p>
+        <button class="btn btn-primary" @onclick=@(() => CreatePlayers(playerCount))>Add Players</button>
+        @if (addNames)
+        {
+            <div class="nameList">
+                <br />
+                <p style="font-weight:600">Choose Names</p>
+                @foreach (var player in Players)
+                {
+                    <p class="name">
+                        @{var label = $"player {player.Order}";}
+                        <MatStringField @bind-Value="player.Name" Label="@label"></MatStringField>
+                    </p>
+                }
+            </div>
+            <button class="btn btn-primary" @onclick="AddNamesAndStart">Begin Game</button>
+        }
     </div>
 }
 else
@@ -31,15 +40,11 @@ else
     <h1 style="padding-left:14.5em">Memory Game</h1>
     <button class="btn btn-secondary" style="margin-left:3em" @onclick="Restart">New Game</button>
     <div class="row">
-        <div class="col" style="width:15em; flex:none; max-width:15em; background-color:lightblue">
-            @if (isOver)
-            {
-                <h1 class="blinking">@Winner.Name Wins!</h1>
-            }
+        <div class="col" style="width:15em; flex:none; max-width:15em; background-color:lightblue">            
             <p style="line-height:1.5; font-size:large">
                 @foreach (var player in Players)
                 {
-                    string cssClassName = player.Name.ToLower().Replace(" ", "");
+                    string cssClassName = $"player{player.Order}";
                     <span class="@cssClassName">
                         <b>@player.Name</b> Score: @player.Score;
                     </span>
@@ -47,18 +52,23 @@ else
                 }
             </p>
 
-            <h3 style="padding-left:2.5em">
+            <h3>
                 @CurrentPlayer.Name's Turn!
             </h3>
         </div>
 
         <div class="col" style="width:61em; margin-left:1em">
+            @if (isOver)
+            {
+                string cssClassName = $"player{Winner.Order}";
+                <h1 class="blinking @cssClassName" style="padding-left:2em">@Winner.Name Wins!</h1>
+            }
             <h4>@result</h4>
             <div class="@Difficulty mat-elevation-z24" style="background-color:darkblue; padding:.5em">
 
                 @foreach (var card in Cards)
                 {
-                    <div class="card" style="width:9.2em; flex:none; border-radius:10px; border:3px solid #000000; padding:1px; height:9.2em; justify-content:center; margin:5px;" @onclick="@(() => SelectCard(card))">
+                    <div class="card memcard" @onclick="@(() => SelectCard(card))">
                         @if (card.IsFlipped)
                         {
                             <img src="@card.Face" style="width:9em; height:9em">
@@ -85,10 +95,10 @@ else
     bool isOver = false;
     bool begin = false;
     bool lockCards = false;
+    bool addNames = false;
     int selections = 0;
     int playerCount = 1;
-    int currentTurn = 1;
-
+    int currentTurn = 1;    
 
     async Task StartGame()
     {
@@ -117,6 +127,7 @@ else
         result = "";
         isOver = false;
         begin = false;
+        addNames = false;
         selections = 0;
         playerCount = 1;
         currentTurn = 1;
@@ -168,16 +179,21 @@ else
     }
     async Task CreatePlayers(int playerCount)
     {
+        if (playerCount > 4)
+            playerCount = 4;
         Players = new List<Player>();
         await Task.Run(() =>
         {
             for (int i = 1; i <= playerCount; i++)
             {
-                var player = new Player() { Name = $"Player {i}", Order = i, Score = 0 };
+                var player = new Player() { Order = i, Score = 0 };
                 Players.Add(player);
-                Console.WriteLine($"Added {player.Name}");
             }
         });
+        addNames = true;        
+    }
+    async Task AddNamesAndStart()
+    {
         await StartGame();
         begin = true;
     }
@@ -196,6 +212,7 @@ else
             return;
         }
         Winner = Players.OrderByDescending(x => x.Score).First();
+        result = $"Game Over!";
         isOver = true;
     }
 }
