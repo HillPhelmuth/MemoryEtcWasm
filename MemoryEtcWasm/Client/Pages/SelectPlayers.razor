@@ -1,0 +1,43 @@
+﻿<MatSelect Label="select difficulty" @bind-Value="Difficulty">
+    <MatOptionString Value="easy">Easy</MatOptionString>
+    <MatOptionString Value="medium">Medium</MatOptionString>
+    <MatOptionString Value="hard">Hard</MatOptionString>
+</MatSelect>
+@if (isAdd)
+{
+    <p>
+        <MatNumericUpDownField Label="How Many Players?" @bind-Value="playerCount" DecimalPlaces=0 Minimum=1 Maximum=4>
+        </MatNumericUpDownField>
+    </p>
+}
+<button class="btn btn-primary" @onclick="SetValues">@addChange difficulty</button>
+
+@code {
+
+    [CascadingParameter]
+    public string addChange { get; set; }
+    [Parameter]
+    public string Difficulty { get; set; }
+    [Parameter]
+    public int playerCount { get; set; }
+    [Parameter]
+    public EventCallback<string> DifficultyChanged { get; set; }
+    [Parameter]
+    public EventCallback<int> playerCountChanged { get; set; }
+    bool isAdd = false;
+    protected override Task OnInitializedAsync()
+    {
+        if (addChange == "Add")
+            isAdd = true;
+        return base.OnInitializedAsync();
+    }
+
+    async void SetValues()
+    {
+        Console.WriteLine("Event Call Method Runs");
+        if (isAdd)
+            await playerCountChanged.InvokeAsync(playerCount);
+        await DifficultyChanged.InvokeAsync(Difficulty);
+
+    }
+}

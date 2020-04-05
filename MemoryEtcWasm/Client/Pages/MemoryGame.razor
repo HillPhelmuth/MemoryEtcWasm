@@ -8,16 +8,19 @@
         <h2 class="">Memory Game</h2>
         <br />
         <p>Select <strong>difficulty</strong> and <strong>number of players</strong></p>
-        <MatSelect Label="select difficulty" @bind-Value="Difficulty">
-            <MatOptionString Value="easy">Easy</MatOptionString>
-            <MatOptionString Value="medium">Medium</MatOptionString>
-            <MatOptionString Value="hard">Hard</MatOptionString>
-        </MatSelect>
-        <p>
+        @*<MatSelect Label="select difficulty" @bind-Value="Difficulty">
+                <MatOptionString Value="easy">Easy</MatOptionString>
+                <MatOptionString Value="medium">Medium</MatOptionString>
+                <MatOptionString Value="hard">Hard</MatOptionString>
+            </MatSelect>*@
+        <CascadingValue Value="addChange">
+            <SelectPlayers DifficultyChanged="DifficultyChangeHandler" @bind-playerCount="playerCount" />
+        </CascadingValue>
+        @*<p>
             <MatNumericUpDownField Label="How Many Players?" @bind-Value="playerCount" DecimalPlaces=0 Minimum=1 Maximum=4 @onkeyup="KeyBoardCreate">
             </MatNumericUpDownField>
-        </p>
-        <button class="btn btn-primary" @onclick=@(() => CreatePlayers(playerCount))>Add Players</button>
+        </p>*@
+        @*<button class="btn btn-primary" @onclick=@(() => CreatePlayers(playerCount))>Add Players</button>*@
         @if (addNames)
         {
             <div class="nameList">
@@ -37,10 +40,27 @@
 }
 else
 {
-    <h1 style="padding-left:14.5em">Memory Game</h1>
-    <button class="btn btn-secondary" style="margin-left:3em" @onclick="Restart">New Game</button>
     <div class="row">
-        <div class="col" style="width:15em; flex:none; max-width:15em; background-color:lightblue">            
+        <div class="col">
+            <button class="btn btn-secondary" style="margin-left:3em" @onclick="Restart">Reset</button><br />
+            @foreach (var player in Players)
+            {
+                string cssClassName = $"player{player.Order}";
+                <span class="@cssClassName">
+                    <b>@player.Name</b> Games Won: @player.GamesWon;
+                </span>
+                <br />
+            }
+        </div>
+        <div class="col">
+            <h1>Memory Game</h1>
+        </div>
+
+    </div>
+    <div class="row">
+        <div class="col sideBoard">
+            <br />
+            <button class="btn btn-primary" style="margin-left:3em" @onclick="NewGame">New Game</button>
             <p style="line-height:1.5; font-size:large">
                 @foreach (var player in Players)
                 {
@@ -63,23 +83,35 @@ else
                 string cssClassName = $"player{Winner.Order}";
                 <h1 class="blinking @cssClassName" style="padding-left:2em">@Winner.Name Wins!</h1>
             }
-            <h4>@result</h4>
-            <div class="@Difficulty mat-elevation-z24" style="background-color:darkblue; padding:.5em">
+            <h4>
+                @result<span style="margin-left:3em">@CurrentPlayer.Name's Turn!</span>
+            </h4>
+            @if (boardVidible)
+            {
+                <div class="@Difficulty mat-elevation-z24" style="background-color:darkblue; padding:.5em">
 
-                @foreach (var card in Cards)
-                {
-                    <div class="card memcard" @onclick="@(() => SelectCard(card))">
-                        @if (card.IsFlipped)
-                        {
-                            <img src="@card.Face" style="width:9em; height:9em">
-                        }
-                        else
-                        {
-                            <p class="text-center" style="font-size:x-large; color:darkblue; padding-top:2em"> Select Card</p>
-                        }
-                    </div>
-                }
-            </div>
+                    @foreach (var card in Cards)
+                    {
+                        <div class="card memcard" @onclick="@(() => SelectCard(card))">
+                            @if (card.IsFlipped)
+                            {
+                                <img src="@card.Face" style="width:9em; height:9em">
+                            }
+                            else
+                            {
+                                <p class="text-center" style="font-size:x-large; color:darkblue; padding-top:2em"> Select Card</p>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p>Select <strong>difficulty</strong></p>
+                <CascadingValue Value="addChange">
+                    <SelectPlayers DifficultyChanged="DifficultyChangeHandler" @bind-playerCount="playerCount" />
+                </CascadingValue>
+            }
         </div>
     </div>
 }
@@ -92,13 +124,16 @@ else
     List<Player> Players { get; set; }
     Player CurrentPlayer { get; set; }
     string result = "";
+    [Parameter]
+    public string addChange { get; set; } = "Add";
     bool isOver = false;
     bool begin = false;
     bool lockCards = false;
     bool addNames = false;
+    bool boardVidible = true;
     int selections = 0;
     int playerCount = 1;
-    int currentTurn = 1;    
+    int currentTurn = 1;
 
     async Task StartGame()
     {
@@ -119,6 +154,7 @@ else
             CurrentPlayer = Players.Where(x => x.Order == currentTurn).FirstOrDefault();
         });
         begin = true;
+        addChange = "Change";
         Console.WriteLine("game began");
 
     }
@@ -132,7 +168,23 @@ else
         playerCount = 1;
         currentTurn = 1;
         Board = null;
+        addChange = "Add";
         StateHasChanged();
+    }
+    void NewGame()
+    {
+        result = "";
+        isOver = false;
+        Board = null;
+        currentTurn = 1;
+        selections = 0;
+        boardVidible = false;
+        foreach (var player in Players)
+        {
+            player.Score = 0;
+        }
+        StateHasChanged();
+
 
     }
     public async Task SelectCard(MemoryCard card)
@@ -190,20 +242,14 @@ else
                 Players.Add(player);
             }
         });
-        addNames = true;        
+        addNames = true;
     }
     async Task AddNamesAndStart()
     {
         await StartGame();
         begin = true;
     }
-    async void KeyBoardCreate(KeyboardEventArgs args)
-    {
-        if (args.Key == "Enter")
-        {
-            await CreatePlayers(playerCount);
-        }
-    }
+
     void DetermineWinner()
     {
         var flipCount = Cards.Where(x => x.IsFlipped).Count();
@@ -211,8 +257,43 @@ else
         {
             return;
         }
-        Winner = Players.OrderByDescending(x => x.Score).First();
+        if (Players.Count() > 1)
+        {
+            var toptwo = Players.OrderByDescending(x => x.Score).Take(2).ToList();
+            var winner = toptwo[0].Score != toptwo[1].Score ? toptwo[0] : new Player() { Name = "No one" };
+            winner.GamesWon++;
+            Winner = winner;
+        }
+        else
+        {
+            var winner = Players.First();
+            winner.GamesWon++;
+            Winner = winner;
+        }
         result = $"Game Over!";
         isOver = true;
     }
+    async void DifficultyChangeHandler(string difficutly)
+    {
+        StateHasChanged();
+        Console.WriteLine("ChangeHandlerRun");
+        Difficulty = difficutly;
+        boardVidible = true;
+        if (addChange == "Add")
+        {
+            var count = playerCount;
+            await CreatePlayers(count);
+            Console.WriteLine($"ran createPlayers with playerCount {count}");
+            await Task.Run(() => StateHasChanged());
+        }
+        else
+        {
+            await AddNamesAndStart();
+            StateHasChanged();
+        }
+
+    }
+   
+
+
 }
